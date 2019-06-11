@@ -1,0 +1,5 @@
+composer.json
+
+"scripts": {
+    "post-install-cmd": "php init --env=Development --overwrite=n"
+}
