@@ -5,9 +5,18 @@ return [
         '@npm'   => '@vendor/npm-asset',
     ],
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
+//    'container' => [
+//        'yii\data\Pagination' => [
+//            'pageSize' => 50
+//        ]
+//    ],
+    'bootstrap' => [
+        'common\bootstrap\SetUp'
+    ],
     'components' => [
         'cache' => [
-            'class' => 'yii\caching\FileCache',
+            'class' => 'yii\caching\MemCache',
+            //'useMemcached' => true
         ],
     ],
 ];
