@@ -1,5 +1,5 @@
 <?php
-namespace common\models;
+namespace common\entities;
 
 use Yii;
 use yii\base\NotSupportedException;
@@ -24,10 +24,23 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
+    use InstantiateTrait;
+
     const STATUS_DELETED = 0;
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
 
+    public function __construct(string $username, string $email, string $password)
+    {
+        $this->username = $username;
+        $this->email = $email;
+        $this->status = self::STATUS_ACTIVE;
+        $this->created_at = time();
+        $this->setPassword($password);
+        $this->generateAuthKey();
+        $this->generateEmailVerificationToken();
+        parent::__construct();
+    }
 
     /**
      * {@inheritdoc}
