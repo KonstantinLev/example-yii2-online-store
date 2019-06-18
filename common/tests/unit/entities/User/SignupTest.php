@@ -8,7 +8,7 @@ class SignupTest extends \Codeception\Test\Unit
 {
     public function testSuccess()
     {
-        $user = new User(
+        $user = User::signup(
             $username = 'username',
             $email = 'email@email.com',
             $password = 'password',
@@ -20,6 +20,6 @@ class SignupTest extends \Codeception\Test\Unit
         $this->assertNotEquals($password, $user->password_hash);
         $this->assertNotEmpty($user->created_at);
         $this->assertNotEmpty($user->created_at);
-        $this->assertNotEmpty($user::STATUS_ACTIVE, $user->status);
+        $this->assertTrue($user->isActive());
     }
 }

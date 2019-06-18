@@ -24,22 +24,21 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
-    use InstantiateTrait;
-
     const STATUS_DELETED = 0;
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
 
-    public function __construct(string $username, string $email, string $password)
+    public static function signup(string $username, string $email, string $password): self
     {
-        $this->username = $username;
-        $this->email = $email;
-        $this->status = self::STATUS_ACTIVE;
-        $this->created_at = time();
-        $this->setPassword($password);
-        $this->generateAuthKey();
-        $this->generateEmailVerificationToken();
-        parent::__construct();
+        $user = new static();
+        $user->username = $username;
+        $user->email = $email;
+        $user->status = self::STATUS_ACTIVE;
+        $user->created_at = time();
+        $user->setPassword($password);
+        $user->generateAuthKey();
+        $user->generateEmailVerificationToken();
+        return $user;
     }
 
     /**
@@ -218,5 +217,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status = self::STATUS_ACTIVE;
     }
 }
