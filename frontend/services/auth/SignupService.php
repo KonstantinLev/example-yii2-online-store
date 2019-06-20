@@ -10,25 +10,68 @@ namespace frontend\services\auth;
 
 use common\entities\User;
 use frontend\forms\SignupForm;
+use Yii;
+use yii\mail\MailerInterface;
 
 class SignupService
 {
-    public function signup(SignupForm $form): User
+    private $mailer;
+
+    public function __construct(MailerInterface $mailer)
     {
-        if (User::find()->andWhere(['username' => $form->username])) {
-            throw new \DomainException('Username is already exist.');
+        $this->mailer = $mailer;
+    }
+
+    public function signup(SignupForm $form): void
+    {
+//        if (User::find()->andWhere(['username' => $form->username])) {
+//            throw new \DomainException('Username is already exist.');
+//        }
+//
+//        if (User::find()->andWhere(['email' => $form->email])) {
+//            throw new \DomainException('Email is already exist.');
+//        }
+        $user = User::requestSignup($form->username,$form->email,$form->password);
+        $this->save($user);
+        $sent = $this
+            ->mailer
+            ->compose(
+                ['html' => 'emailVerify-html', 'text' => 'emailVerify-text'],
+                ['user' => $user]
+            )
+            //->setFrom($this->supportEmail)
+            ->setTo($user->email)
+            ->setSubject('Password reset for ' . Yii::$app->name)
+            ->send();
+
+        if (!$sent) {
+            throw new \RuntimeException('Sending error.');
         }
+        //return $user;
+    }
 
-        if (User::find()->andWhere(['email' => $form->email])) {
-            throw new \DomainException('Email is already exist.');
+    public function confirm($token): void
+    {
+        if (empty($token)) {
+            throw new \RuntimeException('Empty confirm token.');
         }
+        $user = $this->getByEmailConfirmToken($token);
+        $user->confirmSignup();
+        $this->save($user);
+    }
 
-        $user = User::signup($form->username,$form->email,$form->password);
+    private function getByEmailConfirmToken(string $token): User
+    {
+        if (!$user = User::findOne(['verification_token' => $token])) {
+            throw new \RuntimeException('User is not found.');
+        }
+        return $user;
+    }
 
+    private function save(User $user): void
+    {
         if (!$user->save()) {
             throw new \RuntimeException('Saving error.');
         }
-
-        return $user;
     }
 }
