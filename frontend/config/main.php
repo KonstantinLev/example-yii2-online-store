@@ -45,7 +45,22 @@ return [
         'backendUrlManager' => require __DIR__ . '/../../backend/config/urlManager.php',
         'urlManager' => function() {
             return Yii::$app->get('frontendUrlManager');
-        }
+        },
+        'authClientCollection' => [
+            'class' => 'yii\authclient\Collection',
+            'clients' => [
+                'google' => [
+                    'class' => 'yii\authclient\clients\Google',
+                    'clientId' => 'google_client_id',
+                    'clientSecret' => 'google_client_secret',
+                ],
+                'VKontakte' => [
+                    'class' => 'yii\authclient\clients\VKontakte',
+                    'clientId' => 'vkontakte_client_id',
+                    'clientSecret' => 'vkontakte_client_secret',
+                ],
+            ],
+        ]
     ],
     'params' => $params,
 ];

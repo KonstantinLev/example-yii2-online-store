@@ -17,6 +17,11 @@ class UserRepository
         return User::find()->andWhere(['or', ['username' => $value], ['email' => $value]])->one();
     }
 
+    public function findByNetworkIdentity($network, $identity): ?User
+    {
+        return User::find()->joinWith('networks n')->andWhere(['n.network' => $network, 'n.identity' => $identity])->one();
+    }
+
     public function getByEmailConfirmToken(string $token): User
     {
         return $this->getBy(['verification_token' => $token]);
