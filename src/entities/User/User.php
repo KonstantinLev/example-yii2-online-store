@@ -64,12 +64,36 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * {@inheritdoc}
      */
-    public function rules()
+//    public function rules()
+//    {
+//        return [
+//            ['status', 'default', 'value' => self::STATUS_WAIT],
+//            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_WAIT]],
+//        ];
+//    }
+    public static function create(string $username, string $email, string $password): self
     {
-        return [
-            ['status', 'default', 'value' => self::STATUS_WAIT],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_WAIT]],
-        ];
+        $user = new User();
+        $user->username = $username;
+        $user->email = $email;
+        $user->setPassword(!empty($password) ? $password : Yii::$app->security->generateRandomString());
+        $user->created_at = time();
+        $user->status = self::STATUS_ACTIVE;
+        $user->auth_key = Yii::$app->security->generateRandomString();
+        return $user;
+    }
+
+    public function edit(string $username, string $email): void
+    {
+        $this->username = $username;
+        $this->email = $email;
+        $this->updated_at = time();
+    }
+
+    public function editProfile(string $email): void
+    {
+        $this->email = $email;
+        $this->updated_at = time();
     }
 
     public static function requestSignup(string $username, string $email, string $password): self
