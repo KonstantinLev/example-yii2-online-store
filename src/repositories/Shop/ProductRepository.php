@@ -8,6 +8,7 @@
 
 namespace src\repositories\Shop;
 
+use src\entities\Shop\Product\Product;
 use src\repositories\NotFoundException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 

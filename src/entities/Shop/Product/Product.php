@@ -42,6 +42,9 @@ use yii\web\UploadedFile;
  * @property CategoryAssignment[] $categoryAssignments
  * @property Value[] $values
  * @property Photo[] $photos
+ * @property TagAssignment[] $tagAssignments
+ * @property RelatedAssignment[] $relatedAssignments
+ * @property Modification[] $modifications
  */
 class Product extends ActiveRecord
 {
@@ -64,6 +67,16 @@ class Product extends ActiveRecord
         $product->status = self::STATUS_DRAFT;
         $product->created_at = time();
         return $product;
+    }
+
+    public function edit($brandId, $code, $name, $description, $weight, Meta $meta): void
+    {
+        $this->brand_id = $brandId;
+        $this->code = $code;
+        $this->name = $name;
+        $this->description = $description;
+        $this->weight = $weight;
+        $this->meta = $meta;
     }
 
     public function setPrice($new, $old): void
@@ -193,6 +206,126 @@ class Product extends ActiveRecord
         throw new \DomainException('Photo is not found.');
     }
 
+
+    public function assignTag($id): void
+    {
+        $assignments = $this->tagAssignments;
+        foreach ($assignments as $assignment) {
+            if ($assignment->isForTag($id)) {
+                return;
+            }
+        }
+        $assignments[] = TagAssignment::create($id);
+        $this->tagAssignments = $assignments;
+    }
+
+    public function revokeTag($id): void
+    {
+        $assignments = $this->tagAssignments;
+        foreach ($assignments as $i => $assignment) {
+            if ($assignment->isForTag($id)) {
+                unset($assignments[$i]);
+                $this->tagAssignments = $assignments;
+                return;
+            }
+        }
+        throw new \DomainException('Assignment is not found.');
+    }
+
+    public function revokeTags(): void
+    {
+        $this->tagAssignments = [];
+    }
+
+    public function assignRelatedProduct($id): void
+    {
+        $assignments = $this->relatedAssignments;
+        foreach ($assignments as $assignment) {
+            if ($assignment->isForProduct($id)) {
+                return;
+            }
+        }
+        $assignments[] = RelatedAssignment::create($id);
+        $this->relatedAssignments = $assignments;
+    }
+
+    public function revokeRelatedProduct($id): void
+    {
+        $assignments = $this->relatedAssignments;
+        foreach ($assignments as $i => $assignment) {
+            if ($assignment->isForProduct($id)) {
+                unset($assignments[$i]);
+                $this->relatedAssignments = $assignments;
+                return;
+            }
+        }
+        throw new \DomainException('Assignment is not found.');
+    }
+
+    public function getModification($id): Modification
+    {
+        foreach ($this->modifications as $modification) {
+            if ($modification->isIdEqualTo($id)) {
+                return $modification;
+            }
+        }
+        throw new \DomainException('Modification is not found.');
+    }
+
+    public function addModification($code, $name, $price, $quantity): void
+    {
+        $modifications = $this->modifications;
+        foreach ($modifications as $modification) {
+            if ($modification->isCodeEqualTo($code)) {
+                throw new \DomainException('Modification already exists.');
+            }
+        }
+        $modifications[] = Modification::create($code, $name, $price, $quantity);
+        $this->updateModifications($modifications);
+    }
+
+    public function editModification($id, $code, $name, $price, $quantity): void
+    {
+        $modifications = $this->modifications;
+        foreach ($modifications as $i => $modification) {
+            if ($modification->isIdEqualTo($id)) {
+                $modification->edit($code, $name, $price, $quantity);
+                $this->updateModifications($modifications);
+                return;
+            }
+        }
+        throw new \DomainException('Modification is not found.');
+    }
+
+    public function removeModification($id): void
+    {
+        $modifications = $this->modifications;
+        foreach ($modifications as $i => $modification) {
+            if ($modification->isIdEqualTo($id)) {
+                unset($modifications[$i]);
+                $this->updateModifications($modifications);
+                return;
+            }
+        }
+        throw new \DomainException('Modification is not found.');
+    }
+
+    private function updateModifications(array $modifications): void
+    {
+        $this->modifications = $modifications;
+        $this->setQuantity(array_sum(array_map(function (Modification $modification) {
+            return $modification->quantity;
+        }, $this->modifications)));
+    }
+
+    private function setQuantity($quantity): void
+    {
+        if ($this->quantity == 0 && $quantity > 0) {
+            //todo
+        }
+        $this->quantity = $quantity;
+    }
+
     ##########################
 
     public function getBrand(): ActiveQuery
@@ -220,6 +353,26 @@ class Product extends ActiveRecord
         return $this->hasMany(Photo::class, ['product_id' => 'id'])->orderBy('sort');
     }
 
+    public function getTagAssignments(): ActiveQuery
+    {
+        return $this->hasMany(TagAssignment::class, ['product_id' => 'id']);
+    }
+
+    public function getRelatedAssignments(): ActiveQuery
+    {
+        return $this->hasMany(RelatedAssignment::class, ['product_id' => 'id']);
+    }
+
+    public function getRelateds(): ActiveQuery
+    {
+        return $this->hasMany(Product::class, ['id' => 'related_id'])->via('relatedAssignments');
+    }
+
+    public function getModifications(): ActiveQuery
+    {
+        return $this->hasMany(Modification::class, ['product_id' => 'id']);
+    }
+
     ##########################
 
     public static function tableName(): string
@@ -233,7 +386,14 @@ class Product extends ActiveRecord
             MetaBehavior::className(),
             [
                 'class' => SaveRelationsBehavior::className(),
-                'relations' => ['categoryAssignments', 'values', 'photos'],
+                'relations' => [
+                    'categoryAssignments',
+                    'values',
+                    'photos',
+                    'tagAssignments',
+                    'relatedAssignments',
+                    'modifications'
+                ],
             ],
         ];
     }
