@@ -45,6 +45,7 @@ use yii\web\UploadedFile;
  * @property TagAssignment[] $tagAssignments
  * @property RelatedAssignment[] $relatedAssignments
  * @property Modification[] $modifications
+ * @property Review[] $reviews
  */
 class Product extends ActiveRecord
 {
@@ -85,6 +86,33 @@ class Product extends ActiveRecord
         $this->price_old = $old;
     }
 
+    public function setValue($id, $value): void
+    {
+        $values = $this->values;
+        foreach ($values as $val) {
+            if ($val->isForCharacteristic($id)) {
+                $val->change($value);
+                $this->values = $values;
+                return;
+            }
+        }
+        $values[] = Value::create($id, $value);
+        $this->values = $values;
+    }
+
+    public function getValue($id): Value
+    {
+        $values = $this->values;
+        foreach ($values as $val) {
+            if ($val->isForCharacteristic($id)) {
+                return $val;
+            }
+        }
+        return Value::blank($id);
+    }
+
+    //<editor-fold desc="Categories">
+
     public function changeMainCategory($categoryId): void
     {
         $this->category_id = $categoryId;
@@ -120,30 +148,9 @@ class Product extends ActiveRecord
         $this->categoryAssignments = [];
     }
 
-    public function setValue($id, $value): void
-    {
-        $values = $this->values;
-        foreach ($values as $val) {
-            if ($val->isForCharacteristic($id)) {
-                $val->change($value);
-                $this->values = $values;
-                return;
-            }
-        }
-        $values[] = Value::create($id, $value);
-        $this->values = $values;
-    }
+    //</editor-fold>
 
-    public function getValue($id): Value
-    {
-        $values = $this->values;
-        foreach ($values as $val) {
-            if ($val->isForCharacteristic($id)) {
-                return $val;
-            }
-        }
-        return Value::blank($id);
-    }
+    //<editor-fold desc="Photos">
 
     public function addPhoto(UploadedFile $file): void
     {
@@ -206,6 +213,9 @@ class Product extends ActiveRecord
         throw new \DomainException('Photo is not found.');
     }
 
+    //</editor-fold>
+
+    //<editor-fold desc="Tags">
 
     public function assignTag($id): void
     {
@@ -237,6 +247,10 @@ class Product extends ActiveRecord
         $this->tagAssignments = [];
     }
 
+    //</editor-fold>
+
+    //<editor-fold desc="RelatedProducts">
+
     public function assignRelatedProduct($id): void
     {
         $assignments = $this->relatedAssignments;
@@ -261,6 +275,10 @@ class Product extends ActiveRecord
         }
         throw new \DomainException('Assignment is not found.');
     }
+
+    //</editor-fold>
+
+    //<editor-fold desc="Modifications">
 
     public function getModification($id): Modification
     {
@@ -326,7 +344,83 @@ class Product extends ActiveRecord
         $this->quantity = $quantity;
     }
 
-    ##########################
+    //</editor-fold>
+
+    //<editor-fold desc="Reviews">
+
+    public function addReview($userId, $vote, $text): void
+    {
+        $reviews = $this->reviews;
+        $reviews[] = Review::create($userId, $vote, $text);
+        $this->updateReviews($reviews);
+    }
+
+    public function editReview($id, $vote, $text): void
+    {
+        $this->doWithReview($id, function (Review $review) use ($vote, $text) {
+            $review->edit($vote, $text);
+        });
+    }
+
+    public function activateReview($id): void
+    {
+        $this->doWithReview($id, function (Review $review) {
+            $review->activate();
+        });
+    }
+
+    public function draftReview($id): void
+    {
+        $this->doWithReview($id, function (Review $review) {
+            $review->draft();
+        });
+    }
+
+    private function doWithReview($id, callable $callback): void
+    {
+        $reviews = $this->reviews;
+        foreach ($reviews as $review) {
+            if ($review->isIdEqualTo($id)) {
+                $callback($review);
+                $this->updateReviews($reviews);
+                return;
+            }
+        }
+        throw new \DomainException('Review is not found.');
+    }
+
+    public function removeReview($id): void
+    {
+        $reviews = $this->reviews;
+        foreach ($reviews as $i => $review) {
+            if ($review->isIdEqualTo($id)) {
+                unset($reviews[$i]);
+                $this->updateReviews($reviews);
+                return;
+            }
+        }
+        throw new \DomainException('Review is not found.');
+    }
+
+    private function updateReviews(array $reviews): void
+    {
+        $amount = 0;
+        $total = 0;
+
+        foreach ($reviews as $review) {
+            if ($review->isActive()) {
+                $amount++;
+                $total += $review->getRating();
+            }
+        }
+
+        $this->reviews = $reviews;
+        $this->rating = $amount ? $total / $amount : null;
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="Relations">
 
     public function getBrand(): ActiveQuery
     {
@@ -373,7 +467,19 @@ class Product extends ActiveRecord
         return $this->hasMany(Modification::class, ['product_id' => 'id']);
     }
 
-    ##########################
+    public function getReviews(): ActiveQuery
+    {
+        return $this->hasMany(Review::class, ['product_id' => 'id']);
+    }
+
+    public function getMainPhoto(): ActiveQuery
+    {
+        return $this->hasOne(Photo::class, ['id' => 'main_photo_id']);
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="Base">
 
     public static function tableName(): string
     {
@@ -392,7 +498,8 @@ class Product extends ActiveRecord
                     'photos',
                     'tagAssignments',
                     'relatedAssignments',
-                    'modifications'
+                    'modifications',
+                    'reviews'
                 ],
             ],
         ];
@@ -404,4 +511,6 @@ class Product extends ActiveRecord
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
     }
+
+    //</editor-fold>
 }
