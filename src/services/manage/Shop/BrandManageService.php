@@ -8,11 +8,11 @@
 
 namespace src\services\manage\Shop;
 
-
 use src\entities\Meta;
 use src\entities\Shop\Brand;
 use src\forms\manage\Shop\BrandForm;
 use src\repositories\Shop\BrandRepository;
+use src\repositories\Shop\ProductRepository;
 
 class BrandManageService
 {

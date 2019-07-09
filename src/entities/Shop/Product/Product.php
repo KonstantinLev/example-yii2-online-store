@@ -178,7 +178,7 @@ class Product extends ActiveRecord
             $photo->setSort($i);
         }
         $this->photos = $photos;
-        $this->populateRelation('mainPhoto', reset($photos));
+        //$this->populateRelation('mainPhoto', reset($photos));
     }
 
     public function movePhotoUp($id): void

@@ -12,16 +12,20 @@ use src\entities\User\User;
 use src\forms\manage\User\UserCreateForm;
 use src\forms\manage\User\UserEditForm;
 use src\repositories\UserRepository;
+use src\services\TransactionManager;
 
 class UserManageService
 {
     private $repository;
+    private $transaction;
 
     public function __construct(
-        UserRepository $repository
+        UserRepository $repository,
+        TransactionManager $transaction
     )
     {
         $this->repository = $repository;
+        $this->transaction = $transaction;
     }
 
     public function create(UserCreateForm $form): User
@@ -43,5 +47,11 @@ class UserManageService
             $form->email
         );
         $this->repository->save($user);
+    }
+
+    public function remove($id): void
+    {
+        $user = $this->repository->get($id);
+        $this->repository->remove($user);
     }
 }
