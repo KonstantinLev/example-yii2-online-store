@@ -12,6 +12,7 @@ use src\entities\Meta;
 use src\entities\Shop\Category;
 use src\forms\manage\Shop\CategoryForm;
 use src\repositories\Shop\CategoryRepository;
+use src\repositories\Shop\ProductRepository;
 
 class CategoryManageService
 {

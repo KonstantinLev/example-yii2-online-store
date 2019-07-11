@@ -8,7 +8,6 @@
 
 namespace src\forms\manage\Shop;
 
-
 use src\entities\Shop\Category;
 use src\forms\CompositeForm;
 use src\forms\manage\MetaForm;
