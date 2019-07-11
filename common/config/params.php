@@ -9,4 +9,6 @@ return [
     'frontendHostInfo' => 'http://example.com',
     'backendHostInfo' => 'http://backend.example.com',
     'user.rememberMeDuration' => 3600 * 24 * 30,
+    'staticHostInfo' => 'http://static.example.com',
+    'staticPath' => dirname(__DIR__, 2) . '/static',
 ];

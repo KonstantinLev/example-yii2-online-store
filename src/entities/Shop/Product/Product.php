@@ -29,10 +29,10 @@ use yii\web\UploadedFile;
  * @property integer $price_old
  * @property integer $price_new
  * @property integer $rating
- * @property integer $main_photo_id
  * @property integer $status
  * @property integer $weight
  * @property integer $quantity
+ * @property integer $main_photo_id
  *
  * @property Meta $meta
  * @property Brand $brand
@@ -46,6 +46,7 @@ use yii\web\UploadedFile;
  * @property RelatedAssignment[] $relatedAssignments
  * @property Modification[] $modifications
  * @property Review[] $reviews
+ * @property Photo $mainPhoto
  */
 class Product extends ActiveRecord
 {
@@ -109,6 +110,46 @@ class Product extends ActiveRecord
             }
         }
         return Value::blank($id);
+    }
+
+    public function activate(): void
+    {
+        if ($this->isActive()) {
+            throw new \DomainException('Product is already active.');
+        }
+        $this->status = self::STATUS_ACTIVE;
+    }
+
+    public function draft(): void
+    {
+        if ($this->isDraft()) {
+            throw new \DomainException('Product is already draft.');
+        }
+        $this->status = self::STATUS_DRAFT;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status == self::STATUS_ACTIVE;
+    }
+
+
+    public function isDraft(): bool
+    {
+        return $this->status == self::STATUS_DRAFT;
+    }
+
+    public function changeQuantity($quantity): void
+    {
+        if ($this->modifications) {
+            throw new \DomainException('Change modifications quantity.');
+        }
+        $this->setQuantity($quantity);
+    }
+
+    public function canChangeQuantity(): bool
+    {
+        return !$this->modifications;
     }
 
     //<editor-fold desc="Categories">
@@ -178,7 +219,7 @@ class Product extends ActiveRecord
             $photo->setSort($i);
         }
         $this->photos = $photos;
-        //$this->populateRelation('mainPhoto', reset($photos));
+        $this->populateRelation('mainPhoto', reset($photos));
     }
 
     public function movePhotoUp($id): void
@@ -432,6 +473,11 @@ class Product extends ActiveRecord
         return $this->hasOne(Category::class, ['id' => 'category_id']);
     }
 
+    public function getCategories(): ActiveQuery
+    {
+        return $this->hasMany(Category::class, ['id' => 'category_id'])->via('categoryAssignments');
+    }
+
     public function getCategoryAssignments(): ActiveQuery
     {
         return $this->hasMany(CategoryAssignment::class, ['product_id' => 'id']);
@@ -445,6 +491,16 @@ class Product extends ActiveRecord
     public function getPhotos(): ActiveQuery
     {
         return $this->hasMany(Photo::class, ['product_id' => 'id'])->orderBy('sort');
+    }
+
+    public function getMainPhoto(): ActiveQuery
+    {
+        return $this->hasOne(Photo::class, ['id' => 'main_photo_id']);
+    }
+
+    public function getTags(): ActiveQuery
+    {
+        return $this->hasMany(Tag::class, ['id' => 'tag_id'])->via('tagAssignments');
     }
 
     public function getTagAssignments(): ActiveQuery
@@ -470,11 +526,6 @@ class Product extends ActiveRecord
     public function getReviews(): ActiveQuery
     {
         return $this->hasMany(Review::class, ['product_id' => 'id']);
-    }
-
-    public function getMainPhoto(): ActiveQuery
-    {
-        return $this->hasOne(Photo::class, ['id' => 'main_photo_id']);
     }
 
     //</editor-fold>
@@ -510,6 +561,15 @@ class Product extends ActiveRecord
         return [
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
+    }
+
+    public function afterSave($insert, $changedAttributes): void
+    {
+        $related = $this->getRelatedRecords();
+        parent::afterSave($insert, $changedAttributes);
+        if (array_key_exists('mainPhoto', $related)) {
+            $this->updateAttributes(['main_photo_id' => $related['mainPhoto'] ? $related['mainPhoto']->id : null]);
+        }
     }
 
     //</editor-fold>

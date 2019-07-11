@@ -9,6 +9,7 @@
 namespace src\forms\manage\Shop\Product;
 
 use src\entities\Shop\Characteristic;
+use src\entities\Shop\Product\Value;
 use yii\base\Model;
 
 class ValueForm extends Model

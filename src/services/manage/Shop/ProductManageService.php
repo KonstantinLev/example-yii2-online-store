@@ -11,9 +11,12 @@ namespace src\services\manage\Shop;
 use src\entities\Meta;
 use src\entities\Shop\Product\Product;
 use src\entities\Shop\Tag;
+use src\forms\manage\Shop\Product\ModificationForm;
 use src\forms\manage\Shop\Product\PhotosForm;
+use src\forms\manage\Shop\Product\PriceForm;
 use src\forms\manage\Shop\Product\ProductCreateForm;
 use src\forms\manage\Shop\Product\ProductEditForm;
+use src\forms\manage\Shop\Product\QuantityForm;
 use src\repositories\Shop\BrandRepository;
 use src\repositories\Shop\CategoryRepository;
 use src\repositories\Shop\ProductRepository;
@@ -189,10 +192,70 @@ class ProductManageService
         $this->products->save($product);
     }
 
+    public function changePrice($id, PriceForm $form): void
+    {
+        $product = $this->products->get($id);
+        $product->setPrice($form->new, $form->old);
+        $this->products->save($product);
+    }
+
+    public function changeQuantity($id, QuantityForm $form): void
+    {
+        $product = $this->products->get($id);
+        $product->changeQuantity($form->quantity);
+        $this->products->save($product);
+    }
+
+    public function activate($id): void
+    {
+        $product = $this->products->get($id);
+        $product->activate();
+        $this->products->save($product);
+    }
+
+    public function draft($id): void
+    {
+        $product = $this->products->get($id);
+        $product->draft();
+        $this->products->save($product);
+    }
+
 
     public function remove($id): void
     {
         $product = $this->products->get($id);
         $this->products->remove($product);
+    }
+
+    public function addModification($id, ModificationForm $form): void
+    {
+        $product = $this->products->get($id);
+        $product->addModification(
+            $form->code,
+            $form->name,
+            $form->price,
+            $form->quantity
+        );
+        $this->products->save($product);
+    }
+
+    public function editModification($id, $modificationId, ModificationForm $form): void
+    {
+        $product = $this->products->get($id);
+        $product->editModification(
+            $modificationId,
+            $form->code,
+            $form->name,
+            $form->price,
+            $form->quantity
+        );
+        $this->products->save($product);
+    }
+
+    public function removeModification($id, $modificationId): void
+    {
+        $product = $this->products->get($id);
+        $product->removeModification($modificationId);
+        $this->products->save($product);
     }
 }

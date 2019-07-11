@@ -14,9 +14,9 @@ return [
         'common\bootstrap\SetUp'
     ],
     'components' => [
-        'cache' => [
-            'class' => 'yii\caching\MemCache',
-            //'useMemcached' => true
-        ],
+//        'cache' => [
+//            'class' => 'yii\caching\MemCache',
+//            //'useMemcached' => true
+//        ],
     ],
 ];
