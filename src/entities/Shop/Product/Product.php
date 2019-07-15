@@ -13,6 +13,7 @@ use src\entities\behaviors\MetaBehavior;
 use src\entities\Meta;
 use src\entities\Shop\Brand;
 use src\entities\Shop\Category;
+use src\entities\Shop\Product\queries\ProductQuery;
 use src\entities\Shop\Tag;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
@@ -570,6 +571,11 @@ class Product extends ActiveRecord
         if (array_key_exists('mainPhoto', $related)) {
             $this->updateAttributes(['main_photo_id' => $related['mainPhoto'] ? $related['mainPhoto']->id : null]);
         }
+    }
+
+    public static function find(): ProductQuery
+    {
+        return new ProductQuery(static::class);
     }
 
     //</editor-fold>

@@ -52,7 +52,11 @@ class Photo extends ActiveRecord
                 'createThumbsOnRequest' => true,
                 'thumbs' => [
                     'admin' => ['width' => 100, 'height' => 70],
-                    'thumb' => ['width' => 640, 'height' => 480]
+                    'thumb' => ['width' => 640, 'height' => 480],
+                    'cart_list' => ['width' => 150, 'height' => 150],
+                    'cart_widget_list' => ['width' => 57, 'height' => 57],
+                    'catalog_list' => ['width' => 228, 'height' => 228],
+                    'catalog_product_additional' => ['width' => 66, 'height' => 66],
                 ],
                 'filePath' => '@staticRoot/origin/products/[[attribute_product_id]]/[[id]].[[extension]]',
                 'fileUrl' => '@static/origin/products/[[attribute_product_id]]/[[id]].[[extension]]',
