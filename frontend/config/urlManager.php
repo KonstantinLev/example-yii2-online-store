@@ -13,6 +13,10 @@ return [
         'signup/<_a:[\w-]+>' => 'auth/signup/<_a>',
         '<_a:login|logout>' => 'auth/auth/<_a>',
 
+        'catalog' => 'shop/catalog/index',
+        ['class' => 'frontend\urls\CategoryUrlRule'],
+        'catalog/<id:\d+>' => 'shop/catalog/product',
+
         'profile' => 'profile/index/index',
         'profile/<_c:[\w\-]+>' => 'profile/<_c>/index',
         'profile/<_c:[\w\-]+>/<id:\d+>' => 'profile/<_c>/view',

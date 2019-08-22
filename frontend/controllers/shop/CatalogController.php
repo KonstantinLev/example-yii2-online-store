@@ -8,6 +8,8 @@
 
 namespace frontend\controllers\shop;
 
+use src\forms\Shop\AddToCartForm;
+use src\forms\Shop\ReviewForm;
 use src\readModels\Shop\BrandReadRepository;
 use src\readModels\Shop\CategoryReadRepository;
 use src\readModels\Shop\ProductReadRepository;

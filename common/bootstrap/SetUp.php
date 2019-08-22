@@ -9,9 +9,12 @@
 namespace common\bootstrap;
 
 
+use frontend\urls\CategoryUrlRule;
+use src\repositories\Shop\CategoryRepository;
 use src\services\auth\PasswordResetService;
 use src\services\contact\ContactService;
 use yii\base\BootstrapInterface;
+use yii\caching\Cache;
 use yii\di\Instance;
 use yii\mail\MailerInterface;
 
@@ -43,6 +46,15 @@ class SetUp implements BootstrapInterface
         $container->setSingleton(ContactService::class, [], [
             $app->params['adminEmail'],
             Instance::of(MailerInterface::class)//todo можно не указывать, так как при парсинге конструктора контейнер зайдет в функцию выше
+        ]);
+
+        $container->setSingleton(Cache::class, function () use ($app) {
+            return $app->cache;
+        });
+
+        $container->set(CategoryUrlRule::class, [], [
+            Instance::of(CategoryRepository::class),
+            Instance::of('cache')
         ]);
     }
 }

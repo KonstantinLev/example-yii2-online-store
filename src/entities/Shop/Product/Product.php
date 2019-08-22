@@ -134,6 +134,11 @@ class Product extends ActiveRecord
         return $this->status == self::STATUS_ACTIVE;
     }
 
+    public function isAvailable(): bool
+    {
+        return $this->quantity > 0;
+    }
+
 
     public function isDraft(): bool
     {
